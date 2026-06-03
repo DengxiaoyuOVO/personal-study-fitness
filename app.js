@@ -319,23 +319,29 @@ function filterFileCat(cat) {
   document.getElementById("fileList").innerHTML = renderFileGrid(cat === "全部" ? files : files.filter(f => f.category === cat));
 }
 function modalAddFile() {
-  openModal('<h3>上传文件</h3><form onsubmit="saveFile(event)" id="fileForm"><div class="form-group"><label>选择文件</label><input class="input" type="file" name="file" required></div><div class="form-group"><label>分类</label><select class="input" name="category"><option>数学</option><option>英语</option><option>政治</option><option>专业课</option></select></div><div style="display:flex;gap:8px;justify-content:flex-end"><button type="button" class="btn btn-outline" onclick="closeModal()">取消</button><button type="submit" class="btn btn-primary">上传</button></div></form>');
+  openModal('<h3>\u4e0a\u4f20\u6587\u4ef6</h3><form onsubmit="saveFile(event)" id="fileForm"><div class="form-group"><label>\u9009\u62e9\u6587\u4ef6</label><input class="input" type="file" name="file" required></div><div class="form-group"><label>\u5206\u7c7b</label><select class="input" name="category"><option>\u6570\u5b66</option><option>\u82f1\u8bed</option><option>\u653f\u6cbb</option><option>\u4e13\u4e1a\u8bfe</option></select></div><div style="display:flex;gap:8px;justify-content:flex-end"><button type="button" class="btn btn-outline" onclick="closeModal()">\u53d6\u6d88</button><button type="submit" class="btn btn-primary">\u4e0a\u4f20</button></div></form>');
 }
 function saveFile(e) {
   e.preventDefault();
   const f = document.getElementById("fileForm"); const fd = new FormData(f);
   const file = fd.get("file");
   if (!file || !file.name) return;
+  if (file.size > 4 * 1024 * 1024) { alert("\u6587\u4ef6\u8d85\u8fc7 4MB\uff0c\u8bf7\u538b\u7f29\u540e\u4e0a\u4f20"); return; }
   const reader = new FileReader();
   reader.onload = function() {
-    const files = DB.get("uploadedFiles", []);
-    files.push({ id: DB.uid(), name: file.name, category: fd.get("category"), size: (file.size/1024).toFixed(1)+"KB", data: reader.result, date: today() });
-    DB.set("uploadedFiles", files); closeModal(); navigate("files");
+    try {
+      const files = DB.get("uploadedFiles", []);
+      files.push({ id: DB.uid(), name: file.name, category: fd.get("category"), size: (file.size/1024).toFixed(1)+"KB", data: reader.result, date: today() });
+      DB.set("uploadedFiles", files); closeModal(); navigate("files");
+    } catch(err) {
+      alert("\u5b58\u50a8\u5931\u8d25\uff1a" + err.message + "\n\u8bf7\u5c1d\u8bd5\u66f4\u5c0f\u7684\u6587\u4ef6");
+    }
   };
+  reader.onerror = function() { alert("\u6587\u4ef6\u8bfb\u53d6\u5931\u8d25"); };
   reader.readAsDataURL(file);
 }
 function downloadFile(id) { const f = DB.get("uploadedFiles",[]).find(x => x.id === id); if(f){const a=document.createElement("a");a.href=f.data;a.download=f.name;a.click();} }
-function deleteFile(id) { if(!confirm("确定删除？")) return; DB.set("uploadedFiles", DB.get("uploadedFiles",[]).filter(x => x.id !== id)); navigate("files"); }
+function deleteFile(id) { if(!confirm("\u786e\u5b9a\u5220\u9664\uff1f")) return; DB.set("uploadedFiles", DB.get("uploadedFiles",[]).filter(x => x.id !== id)); navigate("files"); }
 
 // ==================== WORKOUT ====================
 function renderWorkout() {
