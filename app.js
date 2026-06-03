@@ -424,7 +424,7 @@ function saveWorkout(e) {
   e.preventDefault();
   const f = e.target; const fd = new FormData(f);
   const workouts = DB.get("workouts", []);
-  workouts.push({ id: DB.uid(), exercise: fd.get("exercise"), part: fd.get("part"), date: fd.get("date"), sets: parseInt(fd.get("sets"))||0, weight: parseInt(fd.get("weight"))||0, reps: parseInt(fd.get("reps"))||0 });
+  workouts.push({ id: DB.uid(), exercise: fd.get("exercise"), part: fd.get("part"), date: fd.get("date"), sets: parseInt(fd.get("sets"))||0, weight: parseInt(fd.get("weight"))||0, reps: parseInt(fd.get("reps"))||0, ktime: fd.get("ktime")||"" });
   DB.set("workouts", workouts); closeModal(); navigate("workout");
 }
 function renderWorkoutCards(workouts) {
@@ -587,7 +587,7 @@ function showCalDetail(ds) {
   document.getElementById("calDetailDate").textContent = "\ud83d\udcc5 "+ds+" 详情";
   let html = "";
   html += '<div style="margin-bottom:12px"><strong>\ud83d\udcd6 学习日志</strong> '+(journals.length ? journals.map(j => '<div style="font-size:13px;margin:4px 0">- '+j.title+' ('+j.duration+'分钟) '+(j.tags||[]).map(t=>tagSpan(t)).join("")+'</div>').join("") : '<span style="color:#94a3b8;font-size:13px">无记录</span>')+'</div>';
-  html += '<div style="margin-bottom:12px"><strong>\ud83d\udcaa 训练打卡</strong> '+(workouts.length ? workouts.map(w => '<div style="font-size:13px;margin:4px 0">- '+w.exercise+' '+w.sets+'x'+w.weight+'x'+w.reps+' '+tagSpan(w.part||"")+'</div>').join("") : '<span style="color:#94a3b8;font-size:13px">无记录</span>')+'</div>';
+  html += '<div style="margin-bottom:12px"><strong>\ud83d\udcaa 训练打卡</strong> '+(workouts.length ? workouts.map(w => '<div style="font-size:13px;margin:4px 0">- '+w.exercise+' '+w.sets+'x'+w.weight+'x'+w.reps+(w.ktime?' ('+w.ktime+')':'')+' '+tagSpan(w.part||"")+'</div>').join("") : '<span style="color:#94a3b8;font-size:13px">无记录</span>')+'</div>';
   html += '<div style="margin-bottom:12px"><strong>\ud83c\udf7d 饮食记录</strong> '+(diets.length ? diets.map(di => '<div style="font-size:13px;margin:4px 0">- ['+di.meal+'] '+di.food+' ('+(di.cal||"?")+'kcal)</div>').join("") : '<span style="color:#94a3b8;font-size:13px">无记录</span>')+'</div>';
   document.getElementById("calDetailContent").innerHTML = html;
 }
