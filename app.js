@@ -322,23 +322,34 @@ function modalAddFile() {
   openModal('<h3>\u4e0a\u4f20\u6587\u4ef6</h3><form onsubmit="saveFile(event)" id="fileForm"><div class="form-group"><label>\u9009\u62e9\u6587\u4ef6</label><input class="input" type="file" name="file" required></div><div class="form-group"><label>\u5206\u7c7b</label><select class="input" name="category"><option>\u6570\u5b66</option><option>\u82f1\u8bed</option><option>\u653f\u6cbb</option><option>\u4e13\u4e1a\u8bfe</option></select></div><div style="display:flex;gap:8px;justify-content:flex-end"><button type="button" class="btn btn-outline" onclick="closeModal()">\u53d6\u6d88</button><button type="submit" class="btn btn-primary">\u4e0a\u4f20</button></div></form>');
 }
 function saveFile(e) {
+  console.log("saveFile called", e);
   e.preventDefault();
-  const f = document.getElementById("fileForm"); const fd = new FormData(f);
+  e.stopPropagation();
+  const f = document.getElementById("fileForm");
+  console.log("fileForm:", f);
+  if (!f) { alert("表单未找到！"); return; }
+  const fd = new FormData(f);
   const file = fd.get("file");
-  if (!file || !file.name) return;
-  if (file.size > 4 * 1024 * 1024) { alert("\u6587\u4ef6\u8d85\u8fc7 4MB\uff0c\u8bf7\u538b\u7f29\u540e\u4e0a\u4f20"); return; }
+  console.log("file:", file);
+  if (!file || !file.name) { alert("请选择文件"); return; }
+  if (file.size > 4 * 1024 * 1024) { alert("文件超过 4MB，请压缩后上传 (当前: "+(file.size/1024/1024).toFixed(1)+"MB)"); return; }
+  alert("正在上传: " + file.name + " (" + (file.size/1024).toFixed(1) + "KB)...");
   const reader = new FileReader();
   reader.onload = function() {
     try {
+      console.log("File read complete, size:", reader.result.length);
       const files = DB.get("uploadedFiles", []);
       files.push({ id: DB.uid(), name: file.name, category: fd.get("category"), size: (file.size/1024).toFixed(1)+"KB", data: reader.result, date: today() });
-      DB.set("uploadedFiles", files); closeModal(); navigate("files");
+      DB.set("uploadedFiles", files);
+      alert("上传成功！");
+      closeModal(); navigate("files");
     } catch(err) {
-      alert("\u5b58\u50a8\u5931\u8d25\uff1a" + err.message + "\n\u8bf7\u5c1d\u8bd5\u66f4\u5c0f\u7684\u6587\u4ef6");
+      alert("存储失败：" + err.message);
     }
   };
-  reader.onerror = function() { alert("\u6587\u4ef6\u8bfb\u53d6\u5931\u8d25"); };
+  reader.onerror = function() { alert("文件读取失败"); };
   reader.readAsDataURL(file);
+  return false;
 }
 function downloadFile(id) { const f = DB.get("uploadedFiles",[]).find(x => x.id === id); if(f){const a=document.createElement("a");a.href=f.data;a.download=f.name;a.click();} }
 function deleteFile(id) { if(!confirm("\u786e\u5b9a\u5220\u9664\uff1f")) return; DB.set("uploadedFiles", DB.get("uploadedFiles",[]).filter(x => x.id !== id)); navigate("files"); }
