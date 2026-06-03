@@ -428,8 +428,28 @@ function saveWorkout(e) {
   DB.set("workouts", workouts); closeModal(); navigate("workout");
 }
 function renderWorkoutCards(workouts) {
-  if (!workouts.length) return '<div style="color:#94a3b8;text-align:center;padding:20px">暂无训练记录</div>';
-  return workouts.map(w => '<div class="card" style="margin-bottom:8px;display:flex;justify-content:space-between;align-items:center"><div><span style="font-weight:600">'+w.exercise+'</span> '+tagSpan(w.part||"")+' <span style="font-size:12px;color:#94a3b8">'+w.date+'</span></div><div style="display:flex;align-items:center;gap:12px"><span style="font-size:13px;color:#64748b">'+w.sets+'组 x '+w.weight+'kg x '+w.reps+'次</span><button class="btn btn-sm btn-danger" onclick="deleteWorkout(\x27'+w.id+'\x27)">删除</button></div></div>').join("");
+  if (!workouts.length) return '<div style="color:#94a3b8;text-align:center;padding:20px">\u6682\u65e0\u8bad\u7ec3\u8bb0\u5f55</div>';
+  const groups = {};
+  workouts.forEach(w => {
+    if (!groups[w.date]) groups[w.date] = [];
+    groups[w.date].push(w);
+  });
+  const sortedDates = Object.keys(groups).sort((a,b) => b.localeCompare(a));
+  let html = '';
+  sortedDates.forEach(date => {
+    const items = groups[date];
+    const dayNames = ["\u5468\u65e5","\u5468\u4e00","\u5468\u4e8c","\u5468\u4e09","\u5468\u56db","\u5468\u4e94","\u5468\u516d"];
+    const d = new Date(date + 'T00:00:00');
+    const dayName = dayNames[d.getDay()];
+    html += '<div class="card" style="margin-bottom:16px;border-left:4px solid #60a5fa">';
+    html += '<div style="font-weight:700;font-size:14px;margin-bottom:10px;color:#1e293b">📅 '+date+' '+dayName+' ('+items.length+'\u4e2a\u52a8\u4f5c)</div>';
+    html += '<table><tr><th>\u52a8\u4f5c</th><th>\u90e8\u4f4d</th><th>\u7ec4\u6570</th><th>\u91cd\u91cf</th><th>\u6b21\u6570</th><th>\u65f6\u95f4</th><th></th></tr>';
+    items.forEach(w => {
+      html += '<tr><td style="font-weight:600">'+w.exercise+'</td><td>'+tagSpan(w.part||"")+'</td><td>'+w.sets+'</td><td>'+(w.weight||0)+'kg</td><td>'+w.reps+'</td><td style="font-size:12px;color:#94a3b8">'+(w.ktime||"-")+'</td><td><button class="btn btn-sm btn-danger" onclick="deleteWorkout(\x27'+w.id+'\x27)">\u5220</button></td></tr>';
+    });
+    html += '</table></div>';
+  });
+  return html;
 }
 function deleteWorkout(id) { if(!confirm("确定删除？")) return; DB.set("workouts", DB.get("workouts",[]).filter(w => w.id !== id)); navigate("workout"); }
 
