@@ -5,6 +5,53 @@ const DB = {
   uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2,8); }
 };
 
+// ==================== FILE STORAGE (IndexedDB) ====================
+const FileStore = {
+  _db: null,
+  async _open() {
+    if (this._db) return this._db;
+    return new Promise((resolve, reject) => {
+      const req = indexedDB.open('PersonalStudyFiles', 1);
+      req.onupgradeneeded = (e) => {
+        const db = e.target.result;
+        if (!db.objectStoreNames.contains('files')) {
+          db.createObjectStore('files', { keyPath: 'id' });
+        }
+      };
+      req.onsuccess = (e) => { this._db = e.target.result; resolve(this._db); };
+      req.onerror = (e) => reject(e.target.error);
+    });
+  },
+  async save(id, data) {
+    const db = await this._open();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction('files', 'readwrite');
+      tx.objectStore('files').put({ id, data });
+      tx.oncomplete = () => resolve();
+      tx.onerror = (e) => reject(e.target.error);
+    });
+  },
+  async load(id) {
+    const db = await this._open();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction('files', 'readonly');
+      const req = tx.objectStore('files').get(id);
+      req.onsuccess = (e) => resolve(e.target.result);
+      req.onerror = (e) => reject(e.target.error);
+    });
+  },
+  async remove(id) {
+    const db = await this._open();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction('files', 'readwrite');
+      tx.objectStore('files').delete(id);
+      tx.oncomplete = () => resolve();
+      tx.onerror = (e) => reject(e.target.error);
+    });
+  }
+};
+
+
 // ==================== INIT ====================
 function initDefaultData() {
   if (!DB.get('initialized')) {
@@ -322,26 +369,22 @@ function modalAddFile() {
   openModal('<h3>\u4e0a\u4f20\u6587\u4ef6</h3><form onsubmit="saveFile(event)" id="fileForm"><div class="form-group"><label>\u9009\u62e9\u6587\u4ef6</label><input class="input" type="file" name="file" required></div><div class="form-group"><label>\u5206\u7c7b</label><select class="input" name="category"><option>\u6570\u5b66</option><option>\u82f1\u8bed</option><option>\u653f\u6cbb</option><option>\u4e13\u4e1a\u8bfe</option></select></div><div style="display:flex;gap:8px;justify-content:flex-end"><button type="button" class="btn btn-outline" onclick="closeModal()">\u53d6\u6d88</button><button type="submit" class="btn btn-primary">\u4e0a\u4f20</button></div></form>');
 }
 function saveFile(e) {
-  console.log("saveFile called", e);
   e.preventDefault();
   e.stopPropagation();
   const f = document.getElementById("fileForm");
-  console.log("fileForm:", f);
-  if (!f) { alert("表单未找到！"); return; }
+  if (!f) return;
   const fd = new FormData(f);
   const file = fd.get("file");
-  console.log("file:", file);
-  if (!file || !file.name) { alert("请选择文件"); return; }
-  if (file.size > 4 * 1024 * 1024) { alert("文件超过 4MB，请压缩后上传 (当前: "+(file.size/1024/1024).toFixed(1)+"MB)"); return; }
-  alert("正在上传: " + file.name + " (" + (file.size/1024).toFixed(1) + "KB)...");
+  if (!file || !file.name) return;
+  if (file.size > 20 * 1024 * 1024) { alert("文件超过 20MB，请压缩后上传"); return; }
   const reader = new FileReader();
-  reader.onload = function() {
+  reader.onload = async function() {
     try {
-      console.log("File read complete, size:", reader.result.length);
+      const id = DB.uid();
+      await FileStore.save(id, reader.result);
       const files = DB.get("uploadedFiles", []);
-      files.push({ id: DB.uid(), name: file.name, category: fd.get("category"), size: (file.size/1024).toFixed(1)+"KB", data: reader.result, date: today() });
+      files.push({ id, name: file.name, category: fd.get("category"), size: (file.size/1024).toFixed(1)+"KB", date: today() });
       DB.set("uploadedFiles", files);
-      alert("上传成功！");
       closeModal(); navigate("files");
     } catch(err) {
       alert("存储失败：" + err.message);
@@ -351,8 +394,9 @@ function saveFile(e) {
   reader.readAsDataURL(file);
   return false;
 }
-function downloadFile(id) { const f = DB.get("uploadedFiles",[]).find(x => x.id === id); if(f){const a=document.createElement("a");a.href=f.data;a.download=f.name;a.click();} }
-function deleteFile(id) { if(!confirm("\u786e\u5b9a\u5220\u9664\uff1f")) return; DB.set("uploadedFiles", DB.get("uploadedFiles",[]).filter(x => x.id !== id)); navigate("files"); }
+
+async function downloadFile(id) { const f = DB.get("uploadedFiles",[]).find(x => x.id === id); if(f){ try { const stored = await FileStore.load(id); const a = document.createElement("a"); a.href = stored ? stored.data : f.data; a.download = f.name; a.click(); } catch(e) { alert("下载失败: "+e.message); } } }
+async function deleteFile(id) { if(!confirm("\u786e\u5b9a\u5220\u9664\uff1f")) return; try { await FileStore.remove(id); } catch(e) {} DB.set("uploadedFiles", DB.get("uploadedFiles",[]).filter(x => x.id !== id)); navigate("files"); }
 
 // ==================== WORKOUT ====================
 function renderWorkout() {
