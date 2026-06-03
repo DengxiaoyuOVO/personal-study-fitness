@@ -117,6 +117,7 @@ window.addEventListener("DOMContentLoaded", () => {
 
 // ==================== HELPERS ====================
 function fmtDate(d) { const dt = new Date(d); return dt.getFullYear()+"-"+String(dt.getMonth()+1).padStart(2,"0")+"-"+String(dt.getDate()).padStart(2,"0"); }
+function fmtSize(bytes) { if (bytes >= 1048576) return (bytes/1048576).toFixed(1)+"MB"; if (bytes >= 1024) return (bytes/1024).toFixed(1)+"KB"; return bytes+"B"; }
 function today() { return fmtDate(new Date()); }
 function thisMonth() { const d = new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0"); }
 function tagSpan(t) {
@@ -376,14 +377,14 @@ function saveFile(e) {
   const fd = new FormData(f);
   const file = fd.get("file");
   if (!file || !file.name) return;
-  if (file.size > 20 * 1024 * 1024) { alert("文件超过 20MB，请压缩后上传"); return; }
+  if (file.size > 500 * 1024 * 1024) { alert("文件超过 500MB"); return; }
   const reader = new FileReader();
   reader.onload = async function() {
     try {
       const id = DB.uid();
       await FileStore.save(id, reader.result);
       const files = DB.get("uploadedFiles", []);
-      files.push({ id, name: file.name, category: fd.get("category"), size: (file.size/1024).toFixed(1)+"KB", date: today() });
+      files.push({ id, name: file.name, category: fd.get("category"), size: fmtSize(file.size), date: today() });
       DB.set("uploadedFiles", files);
       closeModal(); navigate("files");
     } catch(err) {
@@ -391,11 +392,11 @@ function saveFile(e) {
     }
   };
   reader.onerror = function() { alert("文件读取失败"); };
-  reader.readAsDataURL(file);
+  reader.readAsArrayBuffer(file);
   return false;
 }
 
-async function downloadFile(id) { const f = DB.get("uploadedFiles",[]).find(x => x.id === id); if(f){ try { const stored = await FileStore.load(id); const a = document.createElement("a"); a.href = stored ? stored.data : f.data; a.download = f.name; a.click(); } catch(e) { alert("下载失败: "+e.message); } } }
+async function downloadFile(id) { const f = DB.get("uploadedFiles",[]).find(x => x.id === id); if(f){ try { const stored = await FileStore.load(id); const blob = stored ? new Blob([stored.data]) : null; const url = blob ? URL.createObjectURL(blob) : f.data; const a = document.createElement("a"); a.href = url; a.download = f.name; a.click(); setTimeout(() => URL.revokeObjectURL(url), 5000); } catch(e) { alert("下载失败: "+e.message); } } }
 async function deleteFile(id) { if(!confirm("\u786e\u5b9a\u5220\u9664\uff1f")) return; try { await FileStore.remove(id); } catch(e) {} DB.set("uploadedFiles", DB.get("uploadedFiles",[]).filter(x => x.id !== id)); navigate("files"); }
 
 // ==================== WORKOUT ====================
