@@ -148,6 +148,7 @@ function renderPage(page) {
     case "training": mc.innerHTML = renderTraining(); break;
     case "calendar": mc.innerHTML = renderCalendar(); initCalendar(); break;
     case "settings": mc.innerHTML = renderSettings(); break;
+    case "forget": mc.innerHTML = renderForget(); break;
   }
 }
 
