@@ -651,6 +651,7 @@ function getTomorrowReviews() {
 }
 
 function renderForget() {
+  console.log("renderForget called");
   const todayReviews = getTodaysReviews();
   const tomorrowReviews = getTomorrowReviews();
   const doneCount = todayReviews.filter(r => r.done).length;
