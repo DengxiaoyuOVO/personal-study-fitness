@@ -656,21 +656,21 @@ function renderForget() {
   const doneCount = todayReviews.filter(r => r.done).length;
   const totalCount = todayReviews.length;
 
-  let h = '<div style="margin-bottom:24px"><h2 style="font-size:20px;font-weight:700">\U0001f9e0 \u827e\u5bbe\u6d69\u65af\u9057\u5fd8\u66f2\u7ebf</h2></div>';
-  h += '<div class="card card-blue" style="margin-bottom:20px"><div style="font-weight:600;font-size:14px;margin-bottom:8px">\U0001f4c5 \u4eca\u65e5\u590d\u4e60\u63d0\u9192 ('+doneCount+'/'+totalCount+')</div>'+(totalCount>0?'<progress value="'+doneCount+'" max="'+totalCount+'"></progress>':'');
-  if(!totalCount) h += '<div style="color:#94a3b8;text-align:center;padding:20px">\U0001f389 \u4eca\u5929\u6ca1\u6709\u5f85\u590d\u4e60\u7684\u5185\u5bb9</div>';
+  let h = '<div style="margin-bottom:24px"><h2 style="font-size:20px;font-weight:700">🧠 \u827e\u5bbe\u6d69\u65af\u9057\u5fd8\u66f2\u7ebf</h2></div>';
+  h += '<div class="card card-blue" style="margin-bottom:20px"><div style="font-weight:600;font-size:14px;margin-bottom:8px">📅 \u4eca\u65e5\u590d\u4e60\u63d0\u9192 ('+doneCount+'/'+totalCount+')</div>'+(totalCount>0?'<progress value="'+doneCount+'" max="'+totalCount+'"></progress>':'');
+  if(!totalCount) h += '<div style="color:#94a3b8;text-align:center;padding:20px">🎉 \u4eca\u5929\u6ca1\u6709\u5f85\u590d\u4e60\u7684\u5185\u5bb9</div>';
   else { h += '<table><tr><th></th><th>\u5185\u5bb9</th><th>\u5b66\u4e60\u65e5</th><th>\u95f4\u9694</th><th>\u79d1\u76ee</th><th></th></tr>';
     todayReviews.forEach(r => { h += '<tr style="'+(r.done?'opacity:.4':'')+'"><td><input type="checkbox" '+(r.done?'checked':'')+' onchange="toggleReview(\x27'+r.key+'\x27,this.checked)"></td><td style="font-weight:500">'+r.title+'</td><td style="font-size:11px;color:#94a3b8">'+r.studyDate+'</td><td>\u7b2c'+r.intervalDay+'\u6b21('+r.interval+'\u5929)</td><td>'+(r.tags||[]).map(t=>tagSpan(t)).join('')+'</td><td><button class="btn btn-sm btn-success" onclick="markReviewDone(\x27'+r.key+'\x27)">\u2714 \u5df2\u590d\u4e60</button></td></tr>'; });
     h += '</table>'; }
   h += '</div>';
 
-  h += '<div class="grid-2"><div class="card"><div style="font-weight:600;font-size:14px;margin-bottom:12px">\U0001f4c6 \u660e\u65e5\u590d\u4e60\u9884\u89c8 ('+tomorrowReviews.length+'\u9879)</div>';
+  h += '<div class="grid-2"><div class="card"><div style="font-weight:600;font-size:14px;margin-bottom:12px">📆 \u660e\u65e5\u590d\u4e60\u9884\u89c8 ('+tomorrowReviews.length+'\u9879)</div>';
   if(tomorrowReviews.length){ h += '<table><tr><th>\u5185\u5bb9</th><th>\u5b66\u4e60\u65e5</th><th>\u95f4\u9694</th><th>\u79d1\u76ee</th></tr>';
     tomorrowReviews.forEach(r => { h += '<tr><td>'+r.title+'</td><td style="font-size:11px;color:#94a3b8">'+r.studyDate+'</td><td>'+r.interval+'\u5929</td><td>'+(r.tags||[]).map(t=>tagSpan(t)).join('')+'</td></tr>'; });
     h += '</table>'; } else h += '<div style="color:#94a3b8;text-align:center;padding:20px">\u6682\u65e0</div>';
   h += '</div>';
 
-  h += '<div class="card"><div style="font-weight:600;font-size:14px;margin-bottom:12px">\U0001f4d6 \u590d\u4e60\u89c4\u5f8b</div><table><tr><th>\u6b21\u6570</th><th>\u95f4\u9694</th></tr>';
+  h += '<div class="card"><div style="font-weight:600;font-size:14px;margin-bottom:12px">📖 \u590d\u4e60\u89c4\u5f8b</div><table><tr><th>\u6b21\u6570</th><th>\u95f4\u9694</th></tr>';
   FORGET_INTERVALS.forEach((d,i) => { h += '<tr><td>\u7b2c'+(i+1)+'\u6b21</td><td>'+d+'\u5929\u540e</td></tr>'; });
   h += '</table></div></div>';
   return h;
